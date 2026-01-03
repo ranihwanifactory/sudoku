@@ -15,8 +15,15 @@ interface Props {
 const Lobby: React.FC<Props> = ({ onSolo, onCreateRoom, onJoinRoom, onViewLeaderboard }) => {
   const [rooms, setRooms] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'SOLO' | 'MULTI'>('SOLO');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
+    // PWA 설치 프롬프트 캡처
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+
     const roomsRef = ref(db, 'rooms');
     const unsub = onValue(roomsRef, (snapshot) => {
       const data = snapshot.val();
@@ -32,6 +39,19 @@ const Lobby: React.FC<Props> = ({ onSolo, onCreateRoom, onJoinRoom, onViewLeader
     return () => unsub();
   }, []);
 
+  const installApp = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        }
+        setDeferredPrompt(null);
+      });
+    }
+    audio.play('pop');
+  };
+
   const Card = ({ title, desc, icon, color, onClick }: any) => (
     <button 
       onClick={() => { audio.play('click'); onClick(); }}
@@ -45,16 +65,28 @@ const Lobby: React.FC<Props> = ({ onSolo, onCreateRoom, onJoinRoom, onViewLeader
 
   return (
     <div className="flex flex-col items-center gap-8 animate-in fade-in duration-700 py-4">
+      
+      {/* PWA 설치 안내 버튼 (가능할 때만 표시) */}
+      {deferredPrompt && (
+        <button 
+          onClick={installApp}
+          className="shine-btn text-white px-8 py-3 rounded-full font-bold shadow-lg flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
+        >
+          <i className="fa-solid fa-download"></i>
+          폰에 앱 설치하기!
+        </button>
+      )}
+
       {/* 탭 전환기 */}
       <div className="flex bg-white/60 p-2 rounded-[30px] backdrop-blur-md shadow-lg border-2 border-white">
         <button 
-          onClick={() => { setActiveTab('SOLO'); audio.play('click'); }}
+          onClick={() => { setActiveTab('SOLO'); audio.play('pop'); }}
           className={`px-10 py-4 rounded-[25px] font-title text-xl transition-all ${activeTab === 'SOLO' ? 'bg-blue-500 text-white shadow-xl scale-105' : 'text-blue-500 hover:bg-blue-50'}`}
         >
           혼자 연습
         </button>
         <button 
-          onClick={() => { setActiveTab('MULTI'); audio.play('click'); }}
+          onClick={() => { setActiveTab('MULTI'); audio.play('pop'); }}
           className={`px-10 py-4 rounded-[25px] font-title text-xl transition-all ${activeTab === 'MULTI' ? 'bg-pink-500 text-white shadow-xl scale-105' : 'text-pink-500 hover:bg-pink-50'}`}
         >
           모두와 배틀
@@ -99,7 +131,7 @@ const Lobby: React.FC<Props> = ({ onSolo, onCreateRoom, onJoinRoom, onViewLeader
                <div className="text-6xl group-hover:rotate-12 transition-transform">🎮</div>
              </button>
              <button 
-               onClick={onViewLeaderboard}
+               onClick={() => { audio.play('click'); onViewLeaderboard(); }}
                className="bg-gradient-to-br from-blue-400 to-blue-600 p-8 rounded-[45px] text-white shadow-2xl hover:shadow-blue-200 transition-all hover:-translate-y-2 active:scale-95 flex items-center justify-between group"
              >
                <div className="text-left">

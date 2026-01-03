@@ -3,7 +3,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5351/5351333.png">
     <title>바운시 스도쿠 배틀</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -13,6 +18,7 @@
             font-family: 'Nanum Gothic', sans-serif;
             background: #f0f9ff;
             overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         .font-kids {
             font-family: 'Gaegu', cursive;
@@ -30,6 +36,16 @@
         .sudoku-grid {
             user-select: none;
         }
+        /* PWA 설치 버튼 애니메이션 */
+        @keyframes shine {
+          0% { background-position: -200px; }
+          100% { background-position: 200px; }
+        }
+        .shine-btn {
+          background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+          background-size: 200px 100%;
+          animation: shine 3s infinite linear;
+        }
     </style>
 <script type="importmap">
 {
@@ -46,6 +62,17 @@
 </head>
 <body>
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').then(reg => {
+            console.log('SW Registered!', reg);
+          }).catch(err => {
+            console.log('SW Registration failed', err);
+          });
+        });
+      }
+    </script>
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>

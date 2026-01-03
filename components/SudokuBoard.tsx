@@ -44,6 +44,7 @@ const SudokuBoard: React.FC<Props> = ({ difficulty, mode, roomId, onExit }) => {
             setBoard(data.board);
             setInitialBoard(data.board.map((row: number[]) => row.map((cell: number) => cell !== 0)));
             setLoading(false);
+            audio.play('pop');
           }
           
           const parts = data.participants || {};
@@ -54,6 +55,7 @@ const SudokuBoard: React.FC<Props> = ({ difficulty, mode, roomId, onExit }) => {
 
           if (data.winnerName) {
             setWinner(data.winnerName);
+            if (!completed) audio.play('error'); // 누군가 이겼을 때 나에게는 아쉬운 소리
             setCompleted(true);
           }
         }
@@ -67,7 +69,10 @@ const SudokuBoard: React.FC<Props> = ({ difficulty, mode, roomId, onExit }) => {
     
     const newBoard = board.map((row, ri) => row.map((cell, ci) => ri === r && ci === c ? val : cell));
     setBoard(newBoard);
-    audio.play('click');
+    
+    // 빈칸으로 지우는게 아니면 클릭음 재생
+    if (val !== 0) audio.play('click');
+    else audio.play('pop');
 
     const progress = calculateProgress(newBoard);
     
@@ -105,6 +110,7 @@ const SudokuBoard: React.FC<Props> = ({ difficulty, mode, roomId, onExit }) => {
   };
 
   const getGeminiHint = async () => {
+    audio.play('hint');
     setAiHint("스도쿠 박사님이 생각 중이에요... 🤔");
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -147,7 +153,7 @@ const SudokuBoard: React.FC<Props> = ({ difficulty, mode, roomId, onExit }) => {
             row.map((val, c) => (
               <div 
                 key={`${r}-${c}`}
-                onClick={() => setSelected([r, c])}
+                onClick={() => { setSelected([r, c]); audio.play('click'); }}
                 className={`
                   aspect-square flex items-center justify-center text-lg sm:text-2xl font-title cursor-pointer transition-all duration-200
                   ${initialBoard[r][c] ? 'bg-blue-50 text-blue-900' : 'bg-white text-blue-500 hover:bg-yellow-50'}
@@ -229,7 +235,7 @@ const SudokuBoard: React.FC<Props> = ({ difficulty, mode, roomId, onExit }) => {
         )}
 
         <button 
-          onClick={onExit}
+          onClick={() => { audio.play('pop'); onExit(); }}
           className="w-full py-4 bg-gray-400 hover:bg-gray-500 text-white rounded-[25px] shadow-lg font-bold transition-all flex items-center justify-center gap-2 border-b-4 border-gray-600 active:scale-95"
         >
           <i className="fa-solid fa-door-open"></i>
@@ -251,7 +257,7 @@ const SudokuBoard: React.FC<Props> = ({ difficulty, mode, roomId, onExit }) => {
                 <p className="text-gray-700 font-bold mb-8 text-xl">문제를 완벽하게 풀었어요!<br/>역시 스도쿠 천재!</p>
               )}
               <button 
-                onClick={onExit}
+                onClick={() => { audio.play('pop'); onExit(); }}
                 className="w-full py-5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-3xl shadow-xl font-title text-2xl border-b-4 border-blue-800 transition-all active:scale-95"
               >
                 확인
